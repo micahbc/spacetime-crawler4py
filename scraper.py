@@ -2,6 +2,21 @@ import re
 from urllib.parse import urlparse
 
 def scraper(url, resp):
+    '''In this project. we are looking for text in Web pages so that we
+    can search it later on. The following is a list of what a "correct crawl"
+    entails in this context:
+
+Honor the politeness delay for each site
+Crawl all pages with high textual information content
+Detect and avoid infinite traps
+Detect and avoid sets of similar pages with no information
+Detect and avoid dead URLs that return a 200 status but no data.
+Detect and avoid crawling very large files, especially if they
+have low information value.
+For most of these requirements, the only way you can detect these problems
+is by first monitoring where your crawler is going, and then adjusting its
+behavior in order to stay away from problematic pages.
+'''
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
