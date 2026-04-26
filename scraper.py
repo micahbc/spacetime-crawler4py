@@ -54,7 +54,7 @@ def is_valid(url):
     try:
         parsed = urlparse(url)
         if parsed.hostname:
-            if ("ics.uci.edu" or "cs.uci.edu" or "informatics.uci.edu" or "stat.uci.edu") not in parsed.hostname:
+            if ("cs.uci.edu" not in hostname) and ("informatics.uci.edu" not in hostname) and ("stat.uci.edu" not in hostname):
                 return False
         if parsed.scheme not in set(["http", "https"]):
             return False
