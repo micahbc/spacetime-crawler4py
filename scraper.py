@@ -1,22 +1,25 @@
 import re
+import time
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     '''In this project. we are looking for text in Web pages so that we
     can search it later on. The following is a list of what a "correct crawl"
     entails in this context:
 
-Honor the politeness delay for each site
-Crawl all pages with high textual information content
-Detect and avoid infinite traps
-Detect and avoid sets of similar pages with no information
-Detect and avoid dead URLs that return a 200 status but no data.
-Detect and avoid crawling very large files, especially if they
-have low information value.
-For most of these requirements, the only way you can detect these problems
-is by first monitoring where your crawler is going, and then adjusting its
-behavior in order to stay away from problematic pages.
-'''
+    Honor the politeness delay for each site
+    Crawl all pages with high textual information content
+    Detect and avoid infinite traps
+    Detect and avoid sets of similar pages with no information
+    Detect and avoid dead URLs that return a 200 status but no data.
+    Detect and avoid crawling very large files, especially if they
+    have low information value.
+    For most of these requirements, the only way you can detect these problems
+    is by first monitoring where your crawler is going, and then adjusting its
+    behavior in order to stay away from problematic pages.
+    '''
+    time.sleep(5)
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
@@ -30,7 +33,19 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    hyperlinks = []
+    try:
+        if resp.status == 200:
+            '''
+            https://beautiful-soup-4.readthedocs.io/en/latest/#quick-start
+            '''
+            soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
+            for link in soup.find_all('a'):
+                hyperlinks.append(link.get('href'))
+    except:
+        print ("Error: extract_next_links")
+
+    return set(hyperlinks)
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -38,6 +53,9 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
+        if parsed.hostname:
+            if ("ics.uci.edu" or "cs.uci.edu" or "informatics.uci.edu" or "stat.uci.edu") not in parsed.hostname:
+                return False
         if parsed.scheme not in set(["http", "https"]):
             return False
         return not re.match(
