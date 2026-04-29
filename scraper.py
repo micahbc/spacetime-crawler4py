@@ -1,7 +1,11 @@
 import re
-import time
 from urllib.parse import urlparse
+from urllib.parse import parse_qsl
 from bs4 import BeautifulSoup
+from datetime import datetime
+
+MAX_CALENDER = 5
+current_year = datetime.now().year
 
 def scraper(url, resp):
     '''In this project. we are looking for text in Web pages so that we
@@ -19,7 +23,6 @@ def scraper(url, resp):
     is by first monitoring where your crawler is going, and then adjusting its
     behavior in order to stay away from problematic pages.
     '''
-    time.sleep(5)
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
@@ -41,7 +44,7 @@ def extract_next_links(url, resp):
             '''
             soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
             for link in soup.find_all('a'):
-                hyperlinks.append(link.get('href'))
+                hyperlinks.append( urlparse.urldefrag(link.get('href'))[0] )
     except:
         print ("Error: extract_next_links")
 
@@ -53,11 +56,35 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
-        if parsed.hostname:
-            if ("ics.uci.edu" or "cs.uci.edu" or "informatics.uci.edu" or "stat.uci.edu") not in parsed.hostname:
-                return False
         if parsed.scheme not in set(["http", "https"]):
             return False
+
+        if parsed.hostname:
+            if ("cs.uci.edu" not in parsed.hostname) and ("informatics.uci.edu" not in parsed.hostname) and ("stat.uci.edu" not in parsed.hostname):
+                return False
+        if "ical=1" in parsed.query:
+            return False
+        if "redirect_to" in parsed.query:
+            return False
+
+        if "/events/tag/talk/" in parsed.path:
+            # https://isg.ics.uci.edu/events/tag/talk/month
+            if "month" in parsed.path:
+                pass
+            # https://isg.ics.uci.edu/events/tag/talk/list/?tribe-bar-date=2032-12-01
+            elif "list" in parsed.path:
+                date = dict(parse_qsl(parsed.query)).get("tribe-bar-date")
+                if date:
+                    year = int( date.split("-")[0] )
+                    if year > (current_year + MAX_CALENDER):
+                        return False
+            # https://isg.ics.uci.edu/events/tag/talk/2032-09
+            # https://isg.ics.uci.edu/events/tag/talk/day/2032-06-02
+            else:
+                year = int( parsed.path.split("/")[-1].split("-")[0] )
+                if year > (current_year + MAX_CALENDER):
+                        return False
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
@@ -71,3 +98,13 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+    # parsed = urlparse(url)
+    # ValueError: 'YOUR_IP' does not appear to be an IPv4 or IPv6 address
+    except ValueError:
+        print ("ValueError for ", url)
+        return False
+
+    except:
+        print("Error: is_valid")
+        return False
