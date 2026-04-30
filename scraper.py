@@ -3,15 +3,121 @@ import json
 import hashlib
 from urllib.parse import urlparse
 from urllib.parse import parse_qsl
+from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 from datetime import datetime
 
 
+_DEBUG = True
 MAX_CALENDER = 5
 MIN_CALENDER = 1969
 current_year = datetime.now().year
 
 visited_urls = {}
+
+_MAX_CONTENT_LENGTH = 10 * 1024 * 1024 # capping at 10 MB because 11 MB was flagged by a 607 error in the log during testing
+_SIMILARITY_THRESHOLD = 0.9
+_MODULUS_TO_USE_TO_DETERMINE_SIMILARITY = 4
+_N_GRAM_SIZE = 3
+_page_hash_set = {}
+
+_robot_parsers = {}
+
+def _n_gram_hasher(tokens):
+    '''Hashes an n-gram. Returns a hash number.'''
+    h = 8675309
+    for char in tokens:
+        h ^= ord(char)
+        h = (h * 0x100000001b3) & 0xffffffffffffffff
+    return h
+
+def _validate_page_similarity(url, resp):
+    '''Calculates the hash of the page content. If the hash is already in the _page_hash_set,
+    or if the similarity of the page content with any of the previously seen pages is above 
+    the _SIMILARITY_THRESHOLD, it means we have seen already and return False. 
+    Otherwise, add the hash to the _page_hash_set and return True.
+    If the crawler restarts, then the _page_hash_set will be empty and will start from scratch.'''
+    if resp.status != 200:
+        if(_DEBUG):
+            print()
+            print("Invalid status code: ", resp.status, url)
+            print()
+        return True # Don't reject based on status code, but log it for debugging purposes
+    
+    # Check content length to avoid crawling very large files with low information value
+    # and to avoid parsing the large files here
+    content_length = resp.raw_response.headers.get('content-length')
+    
+    if content_length:
+        # Headers are always strings, so you must cast to an integer to compare
+        if int(content_length) > _MAX_CONTENT_LENGTH:
+            if(_DEBUG):
+                print()
+                print(f"Rejected: Page too large ({content_length} bytes): ", url)
+                print()
+            return False
+        
+    content_type = resp.raw_response.headers.get('content-type')
+    content_type = str(content_type).lower() # Convert to string and lowercase for easy checking
+
+    # choose between xml or html parser based on content type
+    if 'xml' in content_type:
+        soup = BeautifulSoup(resp.raw_response.text, 'xml')
+    else:
+        soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
+    
+    # parse page into tokens
+    soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
+    text = soup.get_text()
+    tokens = re.findall(r'\b\w+\b', text.lower())
+    
+    if len(tokens) < _N_GRAM_SIZE:
+        return False # Reject low-information pages
+    
+    n_gram_hashes = set()
+    for i in range(len(tokens) - _N_GRAM_SIZE + 1):
+        # n_gram tokens and join them directly into a string
+        n_gram_str = ''.join(tokens[i:i + _N_GRAM_SIZE])
+        curr = _n_gram_hasher(n_gram_str)
+    
+        if curr % _MODULUS_TO_USE_TO_DETERMINE_SIMILARITY == 0:
+            n_gram_hashes.add(curr)
+    
+    # calculate similarity
+    for existing_hashes in _page_hash_set.values():
+        intersection = len(n_gram_hashes & existing_hashes)
+        union = len(n_gram_hashes | existing_hashes)
+        if union > 0:
+            similarity = intersection / union
+            if similarity > _SIMILARITY_THRESHOLD:
+                return False
+    
+    # else, add hash to set and return True
+    _page_hash_set[url] = n_gram_hashes
+    if(_DEBUG):
+            print()
+            print("New page added to hash: ", url)
+            print()
+    return True
+
+def _can_fetch_url_robots(url):
+    try:
+        parsed = urlparse(url)
+        robots_url = f"{parsed.scheme}://{parsed.netloc}/robots.txt"
+        parser = _robot_parsers.get(robots_url)
+        if parser is None:
+            parser = RobotFileParser()
+            parser.set_url(robots_url)
+            try:
+                parser.read()
+            except Exception:
+                parser = None
+            _robot_parsers[robots_url] = parser
+        if parser is None:
+            return True
+        return parser.can_fetch("*", url)
+    except Exception:
+        return True
 
 def scraper(url, resp):
     '''In this project. we are looking for text in Web pages so that we
@@ -29,8 +135,11 @@ def scraper(url, resp):
     is by first monitoring where your crawler is going, and then adjusting its
     behavior in order to stay away from problematic pages.
     '''
-    links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    if not _validate_page_similarity(url, resp):
+            return []
+    else:
+        links = extract_next_links(url, resp)
+        return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -110,7 +219,14 @@ def is_valid(url):
                 if year < MIN_CALENDER:
                     return False
 
-        return not re.match(
+        if not _can_fetch_url_robots(url):
+            if(_DEBUG):
+                print()
+                print("Blocked by robots.txt: ", url)
+                print()
+            return False
+
+        if re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -118,7 +234,13 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
+            return False
+        
+        if re.match(r"http://instance1_public_ip:8080/(.*?)", parsed.path.lower()):
+            return False
+        
+        return True
 
     except TypeError:
         print ("TypeError for ", parsed)
