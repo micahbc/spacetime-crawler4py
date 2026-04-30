@@ -1,11 +1,17 @@
 import re
+import json
+import hashlib
 from urllib.parse import urlparse
 from urllib.parse import parse_qsl
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+
 MAX_CALENDER = 5
+MIN_CALENDER = 1969
 current_year = datetime.now().year
+
+visited_urls = {}
 
 def scraper(url, resp):
     '''In this project. we are looking for text in Web pages so that we
@@ -36,6 +42,13 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+
+    hashed = hash(url)
+    if hashed not in visited_urls:
+        visited_urls[hashed] = [url]
+    elif url not in visited_urls[hashed]:
+            visited_urls[hashed].append(url)
+
     hyperlinks = []
     try:
         if resp.status == 200:
@@ -44,9 +57,16 @@ def extract_next_links(url, resp):
             '''
             soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
             for link in soup.find_all('a'):
-                hyperlinks.append( urlparse.urldefrag(link.get('href'))[0] )
-    except:
-        print ("Error: extract_next_links")
+                link = link.get('href')
+                if link:
+                    defragmented = link.split("#")[0]
+                    hashed = hash(defragmented)
+                    if hashed not in visited_urls:
+                        hyperlinks.append(defragmented)
+                    elif defragmented not in visited_urls[hashed]:
+                        hyperlinks.append(defragmented)
+    except Exception as e:
+        print (f"Error: {e}")
 
     return set(hyperlinks)
 
@@ -56,6 +76,7 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
+
         if parsed.scheme not in set(["http", "https"]):
             return False
 
@@ -78,12 +99,16 @@ def is_valid(url):
                     year = int( date.split("-")[0] )
                     if year > (current_year + MAX_CALENDER):
                         return False
+                    if year < MIN_CALENDER:
+                        return False
             # https://isg.ics.uci.edu/events/tag/talk/2032-09
             # https://isg.ics.uci.edu/events/tag/talk/day/2032-06-02
             else:
                 year = int( parsed.path.split("/")[-1].split("-")[0] )
                 if year > (current_year + MAX_CALENDER):
                         return False
+                if year < MIN_CALENDER:
+                    return False
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -105,6 +130,6 @@ def is_valid(url):
         print ("ValueError for ", url)
         return False
 
-    except:
-        print("Error: is_valid")
+    except Exception as e:
+        print (f"Error: {e}")
         return False
