@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 MAX_CALENDER = 5
+MIN_CALENDER = 1969
 current_year = datetime.now().year
 
 def scraper(url, resp):
@@ -44,7 +45,9 @@ def extract_next_links(url, resp):
             '''
             soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
             for link in soup.find_all('a'):
-                hyperlinks.append( urlparse.urldefrag(link.get('href'))[0] )
+                link = link.get('href')
+                if link:
+                    hyperlinks.append(link.split("#")[0])
     except:
         print ("Error: extract_next_links")
 
@@ -78,12 +81,16 @@ def is_valid(url):
                     year = int( date.split("-")[0] )
                     if year > (current_year + MAX_CALENDER):
                         return False
+                    if year < MIN_CALENDER:
+                        return False
             # https://isg.ics.uci.edu/events/tag/talk/2032-09
             # https://isg.ics.uci.edu/events/tag/talk/day/2032-06-02
             else:
                 year = int( parsed.path.split("/")[-1].split("-")[0] )
                 if year > (current_year + MAX_CALENDER):
                         return False
+                if year < MIN_CALENDER:
+                    return False
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
