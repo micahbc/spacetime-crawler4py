@@ -47,7 +47,7 @@ def extract_next_links(url, resp):
     if hashed not in visited_urls:
         visited_urls[hashed] = [url]
     elif url not in visited_urls[hashed]:
-            visited_urls[hashed].append(url)
+        visited_urls[hashed].append(url)
 
     hyperlinks = []
     try:
