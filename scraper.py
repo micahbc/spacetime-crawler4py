@@ -6,7 +6,9 @@ from urllib.parse import parse_qsl
 from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 from datetime import datetime
+import shelve
 
+_loaded_stats = False
 
 _DEBUG = True
 MAX_CALENDER = 5
@@ -67,6 +69,10 @@ def _validate_page_similarity(url, resp):
         soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
     
     # parse page into tokens
+    if(_DEBUG):
+        print()
+        print("Parsing page: ", url)
+        print()
     soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
     text = soup.get_text()
     tokens = re.findall(r'\b\w+\b', text.lower())
@@ -237,7 +243,13 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
             return False
         
-        if re.match(r"http://instance1_public_ip:8080/(.*?)", parsed.path.lower()):
+        if re.match(r"http://instance1_public_ip:8080/" +
+                    r"|wics.ics.uci.edu/events/" +
+                    r"|sql", parsed.path.lower()):
+            if(_DEBUG):
+                print()
+                print("Blocked by trap blacklist rules: ", url)
+                print()
             return False
         
         return True
