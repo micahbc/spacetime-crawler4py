@@ -27,16 +27,35 @@ _page_hash_set = {}
 
 _robot_parsers = {}
 
+try:
+    with open("stopwords.txt", "r") as _f:
+        _stop_words = frozenset(line.strip().lower() for line in _f if line.strip())
+except Exception:
+    _stop_words = frozenset()
+
+
 def _load_stats():
     '''Loads the stats from the shelve file. 
     This is used to keep track of the pages and their statistics 
     we have seen before, even if the crawler restarts.'''
+    global _loaded_stats, visited_urls, longest_page, word_fequencies, subdomains #global variables to stop local invisible copies per run of the func
     try:
         '''open shelve file from the config.ini and load the stats into the _stats_dict.'''
         # TODO: implement here and track stats in the _validate_page_similarity function 
         # and the is_valid function, and any other place you think 
         # is useful to track stats.
         stats_file = Config.stats_file
+        with shelve.open(stats_file) as db: # using shelve as a persistent dict-like database with var names from report_stats.py
+            if "visited_urls" in db:
+                visited_urls.update(db["visited_urls"])
+            if "longest_page" in db:
+                stored = db["longest_page"]
+                longest_page[0] = stored[0]
+                longest_page[1] = stored[1]
+            if "word_fequencies" in db:
+                word_fequencies.update(db["word_fequencies"])
+            if "subdomains" in db:
+                subdomains.update(db["subdomains"])
         
         
         
@@ -55,6 +74,12 @@ def _write_stats():
     we have seen before, even if the crawler restarts.'''
     try:
         '''open shelve file from the config.ini and write the stats from the _stats_dict into it.'''
+        stats_file = Config.stats_file
+        with shelve.open(stats_file) as db: # open shelve with context manager, writes stats
+            db["visited_urls"] = visited_urls
+            db["longest_page"] = longest_page
+            db["word_fequencies"] = word_fequencies
+            db["subdomains"] = subdomains
     except Exception as e:
         if(_DEBUG):
             print()
@@ -123,7 +148,8 @@ def _validate_page_similarity(url, resp):
         longest_page[1] = word_count
 
     ''' For report '''
-    computeWordFrequencies(tokens)
+    filtered_tokens = [t for t in tokens if t not in _stop_words] # filtering tokens not in stopwords before calling computeWordFrequencies
+    computeWordFrequencies(filtered_tokens)
 
     n_gram_hashes = set()
     for i in range(word_count - _N_GRAM_SIZE + 1):
@@ -149,6 +175,7 @@ def _validate_page_similarity(url, resp):
             print()
             print("New page added to hash: ", url)
             print()
+    _write_stats() # called after all is validated to write the stats for the report
     return True
 
 def _can_fetch_url_robots(url):
@@ -269,7 +296,7 @@ def is_valid(url):
                 date = dict(parse_qsl(parsed.query)).get("tribe-bar-date")
                 if date:
                     year = int( date.split("-")[0] )
-                    if year > (current_year + _MAX_CALENDER):
+                    if year > (_current_year + _MAX_CALENDER):
                         return False
                     if year < _MIN_CALENDER:
                         return False
@@ -277,7 +304,7 @@ def is_valid(url):
             # https://isg.ics.uci.edu/events/tag/talk/day/2032-06-02
             else:
                 year = int( parsed.path.split("/")[-1].split("-")[0] )
-                if year > (current_year + _MAX_CALENDER):
+                if year > (_current_year + _MAX_CALENDER):
                         return False
                 if year < _MIN_CALENDER:
                     return False
