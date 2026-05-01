@@ -7,8 +7,10 @@ from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 from datetime import datetime
 import shelve
+from utils.config import Config
 
 _loaded_stats = False
+_stats_dict = {}
 
 _DEBUG = True
 MAX_CALENDER = 5
@@ -24,6 +26,40 @@ _N_GRAM_SIZE = 3
 _page_hash_set = {}
 
 _robot_parsers = {}
+
+def _load_stats():
+    '''Loads the stats from the shelve file. 
+    This is used to keep track of the pages and their statistics 
+    we have seen before, even if the crawler restarts.'''
+    try:
+        '''open shelve file from the config.ini and load the stats into the _stats_dict.'''
+        # TODO: implement here and track stats in the _validate_page_similarity function 
+        # and the is_valid function, and any other place you think 
+        # is useful to track stats.
+        stats_file = Config.stats_file
+        
+        
+        
+    except Exception as e:
+        if(_DEBUG):
+            print()
+            print("Error loading stats with exception: ", e)
+            print()   
+    finally:
+        _loaded_stats = True
+        
+        
+def _write_stats():
+    '''Writes the stats to the shelve file. 
+    This is used to keep track of the pages and their statistics 
+    we have seen before, even if the crawler restarts.'''
+    try:
+        '''open shelve file from the config.ini and write the stats from the _stats_dict into it.'''
+    except Exception as e:
+        if(_DEBUG):
+            print()
+            print("Error writing stats with exception: ", e)
+            print()
 
 def _n_gram_hasher(tokens):
     '''Hashes an n-gram. Returns a hash number.'''
@@ -141,6 +177,9 @@ def scraper(url, resp):
     is by first monitoring where your crawler is going, and then adjusting its
     behavior in order to stay away from problematic pages.
     '''
+    if not _loaded_stats:
+        _load_stats()
+
     if not _validate_page_similarity(url, resp):
             return []
     else:
@@ -243,9 +282,9 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
             return False
         
-        if re.match(r"http://instance1_public_ip:8080/" +
-                    r"|wics.ics.uci.edu/events/" +
-                    r"|sql", parsed.path.lower()):
+        if re.search(r"http://instance1_public_ip:8080/" +
+             r"|wics\.ics\.uci\.edu/events/|wics\.ics\.uci\.edu.*\?share=" +
+             r"|sql", url.lower()):
             if(_DEBUG):
                 print()
                 print("Blocked by trap blacklist rules: ", url)
