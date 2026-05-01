@@ -1,5 +1,4 @@
 import re
-import json
 import hashlib
 from urllib.parse import urlparse
 from urllib.parse import parse_qsl
@@ -7,13 +6,14 @@ from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 from datetime import datetime
 
+from report_stats import *
+
 
 _DEBUG = True
-MAX_CALENDER = 5
-MIN_CALENDER = 1969
-current_year = datetime.now().year
 
-visited_urls = {}
+_MAX_CALENDER = 5
+_MIN_CALENDER = 2010
+_current_year = datetime.now().year
 
 _MAX_CONTENT_LENGTH = 10 * 1024 * 1024 # capping at 10 MB because 11 MB was flagged by a 607 error in the log during testing
 _SIMILARITY_THRESHOLD = 0.9
@@ -22,6 +22,7 @@ _N_GRAM_SIZE = 3
 _page_hash_set = {}
 
 _robot_parsers = {}
+
 
 def _n_gram_hasher(tokens):
     '''Hashes an n-gram. Returns a hash number.'''
@@ -70,12 +71,21 @@ def _validate_page_similarity(url, resp):
     soup = BeautifulSoup(resp.raw_response.text, 'html.parser')
     text = soup.get_text()
     tokens = re.findall(r'\b\w+\b', text.lower())
-    
-    if len(tokens) < _N_GRAM_SIZE:
+
+    word_count = len(tokens)
+    if word_count < _N_GRAM_SIZE:
         return False # Reject low-information pages
-    
+
+    ''' For report '''
+    if word_count > longest_page[1]:
+        longest_page[0] = url
+        longest_page[1] = word_count
+
+    ''' For report '''
+    computeWordFrequencies(tokens)
+
     n_gram_hashes = set()
-    for i in range(len(tokens) - _N_GRAM_SIZE + 1):
+    for i in range(word_count - _N_GRAM_SIZE + 1):
         # n_gram tokens and join them directly into a string
         n_gram_str = ''.join(tokens[i:i + _N_GRAM_SIZE])
         curr = _n_gram_hasher(n_gram_str)
@@ -118,6 +128,7 @@ def _can_fetch_url_robots(url):
         return parser.can_fetch("*", url)
     except Exception:
         return True
+
 
 def scraper(url, resp):
     '''In this project. we are looking for text in Web pages so that we
@@ -192,8 +203,16 @@ def is_valid(url):
         if parsed.hostname:
             if ("cs.uci.edu" not in parsed.hostname) and ("informatics.uci.edu" not in parsed.hostname) and ("stat.uci.edu" not in parsed.hostname):
                 return False
+            else:
+                ''' For report '''
+                if parsed.hostname not in subdomains:
+                    subdomains[parsed.hostname] = 1
+                else:
+                    subdomains[parsed.hostname] += 1
+
         if "ical=1" in parsed.query:
             return False
+
         if "redirect_to" in parsed.query:
             return False
 
@@ -206,17 +225,17 @@ def is_valid(url):
                 date = dict(parse_qsl(parsed.query)).get("tribe-bar-date")
                 if date:
                     year = int( date.split("-")[0] )
-                    if year > (current_year + MAX_CALENDER):
+                    if year > (current_year + _MAX_CALENDER):
                         return False
-                    if year < MIN_CALENDER:
+                    if year < _MIN_CALENDER:
                         return False
             # https://isg.ics.uci.edu/events/tag/talk/2032-09
             # https://isg.ics.uci.edu/events/tag/talk/day/2032-06-02
             else:
                 year = int( parsed.path.split("/")[-1].split("-")[0] )
-                if year > (current_year + MAX_CALENDER):
+                if year > (current_year + _MAX_CALENDER):
                         return False
-                if year < MIN_CALENDER:
+                if year < _MIN_CALENDER:
                     return False
 
         if not _can_fetch_url_robots(url):
