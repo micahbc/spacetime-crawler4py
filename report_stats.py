@@ -27,24 +27,21 @@ def printFrequencies():
         print (f'\t{i}. {pair[0]}, {pair[1]}')
 
 
-def print_report():
-    print (f'(1) Unique pages:\n\t {len(visited_urls)}')
-
-    print (f'\n(2) Longest page:\n\t {longest_page[0]}, {longest_page[1]}')
-
-    print ("\n(3) Common words: ")
+def print_report(out):
+    print (f'(1) Unique pages:\n\t {len(visited_urls)}', file=out)
+    print (f'\n(2) Longest page:\n\t {longest_page[0]}, {longest_page[1]}', file=out)
+    print ("\n(3) Common words: ", file=out)
     printFrequencies()
-
-    print ("\n(4) Subdomains: ")
+    print ("\n(4) Subdomains: ", file=out)
     sorted_subdomains = dict(sorted(subdomains.items()))
     for key, value in sorted_subdomains.items():
-        print (f'\t{key}, {value}')
+        print (f'\t{key}, {value}', file=out)
 
 
 # temporary, for debug
 def signal_handler(signum, frame):
     print ("Signal received")
-    print_report()
+    print_report(sys.stdout)
     sys.exit()
 
 signal.signal(signal.SIGINT, signal_handler)

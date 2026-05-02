@@ -10,9 +10,10 @@ from report_stats import *
 
 
 class Worker(Thread):
-    def __init__(self, worker_id, config, frontier):
+    def __init__(self, worker_id, config, restart, frontier):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
+        self.restart = restart
         self.frontier = frontier
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
@@ -29,9 +30,14 @@ class Worker(Thread):
             self.logger.info(
                 f"Downloaded {tbd_url}, status <{resp.status}>, "
                 f"using cache {self.config.cache_server}.")
-            scraped_urls = scraper.scraper(tbd_url, resp)
+            scraped_urls = scraper.scraper(tbd_url, resp, self.config, self.restart)
             for scraped_url in scraped_urls:
                 self.frontier.add_url(scraped_url)
             self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)
-        print_report()
+
+        try:
+            with open("report.txt", "w") as f:
+                print_report(f)
+        except Exception as e:
+            print (f"Error outputting report: {e}")

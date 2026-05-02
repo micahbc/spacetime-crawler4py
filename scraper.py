@@ -1,4 +1,5 @@
 import re
+import os
 import hashlib
 from urllib.parse import urlparse
 from urllib.parse import parse_qsl
@@ -6,7 +7,6 @@ from urllib.robotparser import RobotFileParser
 from bs4 import BeautifulSoup
 from datetime import datetime
 import shelve
-from utils.config import Config
 
 from report_stats import *
 
@@ -34,17 +34,26 @@ except Exception:
     _stop_words = frozenset()
 
 
-def _load_stats():
+def _load_stats(config, restart):
     '''Loads the stats from the shelve file. 
     This is used to keep track of the pages and their statistics 
     we have seen before, even if the crawler restarts.'''
     global _loaded_stats, visited_urls, longest_page, word_fequencies, subdomains #global variables to stop local invisible copies per run of the func
     try:
+
+        ''' in case of restart '''
+        if not os.path.exists(config.stats_file) and not restart:
+            # Stats file does not exist, but request to load stats.
+            if(_DEBUG):
+                print (f"Did not find stats file {config.stats_file}, starting from seed.")
+        elif os.path.exists(config.stats_file) and restart:
+            # Stats file does exists, but request to start from seed.
+            if(_DEBUG):
+                print (f"Found stats file {config.stats_file}, deleting it.")
+            os.remove(config.stats_file)
+
         '''open shelve file from the config.ini and load the stats into the _stats_dict.'''
-        # TODO: implement here and track stats in the _validate_page_similarity function 
-        # and the is_valid function, and any other place you think 
-        # is useful to track stats.
-        stats_file = Config.stats_file
+        stats_file = config.stats_file
         with shelve.open(stats_file) as db: # using shelve as a persistent dict-like database with var names from report_stats.py
             if "visited_urls" in db:
                 visited_urls.update(db["visited_urls"])
@@ -56,9 +65,6 @@ def _load_stats():
                 word_fequencies.update(db["word_fequencies"])
             if "subdomains" in db:
                 subdomains.update(db["subdomains"])
-        
-        
-        
     except Exception as e:
         if(_DEBUG):
             print()
@@ -68,13 +74,13 @@ def _load_stats():
         _loaded_stats = True
         
         
-def _write_stats():
+def _write_stats(config):
     '''Writes the stats to the shelve file. 
     This is used to keep track of the pages and their statistics 
     we have seen before, even if the crawler restarts.'''
     try:
         '''open shelve file from the config.ini and write the stats from the _stats_dict into it.'''
-        stats_file = Config.stats_file
+        stats_file = config.stats_file
         with shelve.open(stats_file) as db: # open shelve with context manager, writes stats
             db["visited_urls"] = visited_urls
             db["longest_page"] = longest_page
@@ -94,7 +100,7 @@ def _n_gram_hasher(tokens):
         h = (h * 0x100000001b3) & 0xffffffffffffffff
     return h
 
-def _validate_page_similarity(url, resp):
+def _validate_page_similarity(url, resp, config):
     '''Calculates the hash of the page content. If the hash is already in the _page_hash_set,
     or if the similarity of the page content with any of the previously seen pages is above 
     the _SIMILARITY_THRESHOLD, it means we have seen already and return False. 
@@ -175,7 +181,7 @@ def _validate_page_similarity(url, resp):
             print()
             print("New page added to hash: ", url)
             print()
-    _write_stats() # called after all is validated to write the stats for the report
+    _write_stats(config) # called after all is validated to write the stats for the report
     return True
 
 def _can_fetch_url_robots(url):
@@ -198,7 +204,7 @@ def _can_fetch_url_robots(url):
         return True
 
 
-def scraper(url, resp):
+def scraper(url, resp, config, restart):
     '''In this project. we are looking for text in Web pages so that we
     can search it later on. The following is a list of what a "correct crawl"
     entails in this context:
@@ -215,9 +221,9 @@ def scraper(url, resp):
     behavior in order to stay away from problematic pages.
     '''
     if not _loaded_stats:
-        _load_stats()
+        _load_stats(config, restart)
 
-    if not _validate_page_similarity(url, resp):
+    if not _validate_page_similarity(url, resp, config):
             return []
     else:
         links = extract_next_links(url, resp)
