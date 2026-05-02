@@ -42,6 +42,8 @@ def print_report(out):
 def signal_handler(signum, frame):
     print ("Signal received")
     print_report(sys.stdout)
+    with open("report.txt", "w") as f:
+                print_report(f)
     sys.exit()
 
 signal.signal(signal.SIGINT, signal_handler)

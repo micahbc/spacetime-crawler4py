@@ -13,7 +13,7 @@ from report_stats import *
 _loaded_stats = False
 _stats_dict = {}
 
-_DEBUG = True
+_DEBUG = False
 
 _MAX_CALENDER = 5
 _MIN_CALENDER = 2010
