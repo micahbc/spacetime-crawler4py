@@ -260,8 +260,10 @@ def extract_next_links(url, resp):
                     hashed = hash(defragmented)
                     if hashed not in visited_urls:
                         hyperlinks.append(defragmented)
+                        visited_urls[hashed] = [defragmented]
                     elif defragmented not in visited_urls[hashed]:
                         hyperlinks.append(defragmented)
+                        visited_urls[hashed].append(defragmented)
     except Exception as e:
         print (f"Error: {e}")
 
@@ -330,12 +332,11 @@ def is_valid(url):
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower()):
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|sql|ppsx)$", parsed.path.lower()):
             return False
         
         if re.search(r"http://instance1_public_ip:8080/" +
-             r"|wics\.ics\.uci\.edu/events/|wics\.ics\.uci\.edu.*\?share=" +
-             r"|sql", url.lower()):
+             r"|wics\.ics\.uci\.edu/events/|wics\.ics\.uci\.edu.*\?share=", url.lower()):
             if(_DEBUG):
                 print()
                 print("Blocked by trap blacklist rules: ", url)

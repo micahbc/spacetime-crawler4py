@@ -16,7 +16,7 @@ def computeWordFrequencies(tokens):
             word_fequencies[token] += 1
 
 
-def printFrequencies():
+def printFrequencies(out):
     sorted_map = list(word_fequencies.items())
     sorted_map.sort(key=lambda tup: tup[1], reverse=True)
     i = 0
@@ -24,16 +24,17 @@ def printFrequencies():
         if i >= 50:
             break
         i += 1
-        print (f'\t{i}. {pair[0]}, {pair[1]}')
+        print (f'\t{i}. {pair[0]}, {pair[1]}', file=out)
 
 
 def print_report(out):
     print (f'(1) Unique pages:\n\t {len(visited_urls)}', file=out)
     print (f'\n(2) Longest page:\n\t {longest_page[0]}, {longest_page[1]}', file=out)
     print ("\n(3) Common words: ", file=out)
-    printFrequencies()
+    printFrequencies(out)
     print ("\n(4) Subdomains: ", file=out)
     sorted_subdomains = dict(sorted(subdomains.items()))
+    print(f"Number of subdomains: {len(sorted_subdomains)}", file=out)
     for key, value in sorted_subdomains.items():
         print (f'\t{key}, {value}', file=out)
 
