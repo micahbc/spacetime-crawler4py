@@ -240,11 +240,11 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
 
-    hashed = hash(url)
-    if hashed not in visited_urls:
-        visited_urls[hashed] = [url]
-    elif url not in visited_urls[hashed]:
-        visited_urls[hashed].append(url)
+    #hashed = hash(url)
+    #if hashed not in visited_urls:
+    #    visited_urls[hashed] = [url]
+    #elif url not in visited_urls[hashed]:
+    #    visited_urls[hashed].append(url)
 
     hyperlinks = []
     try:
@@ -260,10 +260,10 @@ def extract_next_links(url, resp):
                     hashed = hash(defragmented)
                     if hashed not in visited_urls:
                         hyperlinks.append(defragmented)
-                        visited_urls[hashed] = [defragmented]
+                        #visited_urls[hashed] = [defragmented]
                     elif defragmented not in visited_urls[hashed]:
                         hyperlinks.append(defragmented)
-                        visited_urls[hashed].append(defragmented)
+                        #visited_urls[hashed].append(defragmented)
     except Exception as e:
         print (f"Error: {e}")
 
@@ -342,6 +342,12 @@ def is_valid(url):
                 print("Blocked by trap blacklist rules: ", url)
                 print()
             return False
+        
+        hashed = hash(url)
+        if hashed not in visited_urls:
+            visited_urls[hashed] = [url]
+        elif url not in visited_urls[hashed]:
+            visited_urls[hashed].append(url)
         
         return True
 
