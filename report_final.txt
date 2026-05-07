@@ -1,0 +1,167 @@
+(1) Unique pages:
+	 5030
+
+(2) Longest page:
+	 http://www.ics.uci.edu/~shantas/publications/20-secret-sharing-aggregation-TKDE-shantanu, 583573
+
+(3) Common words: 
+	1. research, 12381
+	2. data, 12053
+	3. 00, 11228
+	4. pm, 11160
+	5. events, 9893
+	6. ramesh, 8850
+	7. computer, 7895
+	8. information, 7341
+	9. systems, 7300
+	10. 2025, 6951
+	11. students, 6898
+	12. current, 6758
+	13. ics, 6673
+	14. science, 6625
+	15. university, 6612
+	16. search, 6547
+	17. jain, 6368
+	18. uci, 6215
+	19. will, 6146
+	20. us, 5869
+	21. 2026, 5749
+	22. news, 5501
+	23. computing, 5449
+	24. learning, 5307
+	25. dbh, 4955
+	26. past, 4824
+	27. irvine, 4800
+	28. isg, 4504
+	29. 2024, 4387
+	30. courses, 3960
+	31. time, 3946
+	32. access, 3829
+	33. uc, 3790
+	34. software, 3751
+	35. can, 3698
+	36. people, 3693
+	37. 2023, 3666
+	38. student, 3591
+	39. fri, 3551
+	40. may, 3341
+	41. 3011, 3302
+	42. companies, 3298
+	43. projects, 3277
+	44. faculty, 3271
+	45. machine, 3251
+	46. theme, 3241
+	47. books, 3239
+	48. new, 3209
+	49. award, 3200
+	50. ai, 3140
+
+(4) Subdomains: 
+Number of subdomains: 107
+	accessibility.ics.uci.edu, 1
+	acoi.ics.uci.edu, 123
+	archive-beta.ics.uci.edu, 1
+	archive-www.ics.uci.edu, 7
+	archive.ics.uci.edu, 3
+	asterix.ics.uci.edu, 8
+	asterixdb.ics.uci.edu, 2
+	auge.ics.uci.edu, 2
+	cbcl.ics.uci.edu, 1
+	cecs.uci.edu, 3
+	cert.ics.uci.edu, 2
+	cgvw.ics.uci.edu, 1
+	checkmate.ics.uci.edu, 1
+	chenli.ics.uci.edu, 30
+	cherry.ics.uci.edu, 1
+	chime.ics.uci.edu, 1
+	cloudberry.ics.uci.edu, 10
+	cml.ics.uci.edu, 181
+	code.ics.uci.edu, 28
+	computableplant.ics.uci.edu, 220
+	coronavirustwittermap.ics.uci.edu, 1
+	courselisting.ics.uci.edu, 4
+	create.ics.uci.edu, 11
+	cs.ics.uci.edu, 18
+	cs.uci.edu, 1
+	cyberclub.ics.uci.edu, 1
+	dataguard.ics.uci.edu, 1
+	dataprotector.ics.uci.edu, 1
+	dblp.ics.uci.edu, 2
+	dgillen.ics.uci.edu, 80
+	ds4all.ics.uci.edu, 10
+	dynamo.ics.uci.edu, 1
+	edgelab.ics.uci.edu, 7
+	emj-pc.ics.uci.edu, 1
+	emj.ics.uci.edu, 90
+	esl.ics.uci.edu, 1
+	evoke.ics.uci.edu, 5
+	flamingo.ics.uci.edu, 16
+	fr.ics.uci.edu, 8
+	futurehealth.ics.uci.edu, 3
+	grape.ics.uci.edu, 91
+	graphics.ics.uci.edu, 12
+	graphmod.ics.uci.edu, 1
+	hack.ics.uci.edu, 1
+	hobbes.ics.uci.edu, 2
+	hpi.ics.uci.edu, 7
+	icde2023.ics.uci.edu, 48
+	ics.uci.edu, 2785
+	industryshowcase.ics.uci.edu, 25
+	informatics.ics.uci.edu, 20
+	informatics.uci.edu, 1
+	intranet.ics.uci.edu, 1
+	ipubmed.ics.uci.edu, 3
+	isg.ics.uci.edu, 924
+	jgarcia.ics.uci.edu, 105
+	jujube.ics.uci.edu, 3
+	kdd.ics.uci.edu, 1
+	luci.ics.uci.edu, 7
+	mailman.ics.uci.edu, 4
+	mapgrid.ics.uci.edu, 1
+	mcs.ics.uci.edu, 15
+	mdogucu.ics.uci.edu, 1
+	mds.ics.uci.edu, 13
+	metaviz.ics.uci.edu, 1
+	mhcid.ics.uci.edu, 17
+	mswe.ics.uci.edu, 12
+	mt-live.ics.uci.edu, 1
+	myip.ics.uci.edu, 1
+	nalini.ics.uci.edu, 15
+	newport.eecs.uci.edu, 3
+	news.nacs.uci.edu, 1
+	ngs.ics.uci.edu, 1803
+	oai.ics.uci.edu, 8
+	physics.uci.edu, 38
+	psearch.ics.uci.edu, 3
+	riscit.ics.uci.edu, 1
+	satware.ics.uci.edu, 1
+	seal.ics.uci.edu, 9
+	seraja.ics.uci.edu, 1
+	sherlock.ics.uci.edu, 2
+	sli.ics.uci.edu, 6
+	sprout.ics.uci.edu, 2
+	stairs.ics.uci.edu, 1
+	stat.ics.uci.edu, 14
+	stat.uci.edu, 1
+	summeracademy.ics.uci.edu, 27
+	swiki.ics.uci.edu, 1
+	tastier.ics.uci.edu, 2
+	tippers.ics.uci.edu, 1
+	tippersweb.ics.uci.edu, 4
+	tutoring.ics.uci.edu, 5
+	tutors.ics.uci.edu, 1
+	vision.ics.uci.edu, 9
+	wics.ics.uci.edu, 870
+	wiki.ics.uci.edu, 2
+	www-db.ics.uci.edu, 44
+	www.cecs.uci.edu, 67
+	www.cert.ics.uci.edu, 2
+	www.cs.uci.edu, 16
+	www.graphics.ics.uci.edu, 2
+	www.ics.uci.edu, 891
+	www.informatics.ics.uci.edu, 2
+	www.informatics.uci.edu, 24
+	www.isg.ics.uci.edu, 1
+	www.physics.uci.edu, 211
+	www.stat.uci.edu, 15
+	xtune.ics.uci.edu, 7
